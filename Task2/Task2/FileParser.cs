@@ -6,29 +6,55 @@ using System.Text.RegularExpressions;
 
 namespace Task2
 {
-    class FileParser
+    class AssetCache : IAssetCache
     {
-        private const int CHECKER = 20;
+        private const int CHECKAMOUNT = 20;
 
+        private Cache result;
         private string currentString;
+        private int currentStringNumber;
+        private ulong currentAnchor;
         private StreamReader file;
         private bool insideGameObject;
         private int nodesChecked;
+        //int  timestamp
 
-        public void Build(string path, Action interruptChecker)
+        public AssetCache()
+        {
+            result = new Cache();
+            currentString = null;
+            currentStringNumber = 0;
+            currentAnchor = 0;
+            file = null;
+            insideGameObject = false;
+            nodesChecked = 0;
+            //timestamp null
+        }
+
+
+        public Cache Build(string path, Action interruptChecker)
         {
             file = File.OpenText(path);
-
+            //switch timestamp 
+            // case null
+            //  timestamp = file.timestamp;
+            // case file.timestamp
+            //  ContinueBuild();
+            // default
+            //  NewBuild();
             file.ReadLine();
+            currentStringNumber++;
             file.ReadLine();
+            currentStringNumber++;
 
             if ((currentString = file.ReadLine()) != null)
             {
                 ParseObjectHeader();
             }
 
-            nodesChecked = 0;
             InvokeNodeParsing(interruptChecker);
+
+            return result;
         }
 
         private void InvokeNodeParsing(Action InterruptChecker)
@@ -49,7 +75,7 @@ namespace Task2
                 InvokeNodeParsing(InterruptChecker);
 
                 // interruption handler
-                if (nodesChecked == CHECKER)
+                if (nodesChecked == CHECKAMOUNT)
                 {
                     try
                     {
@@ -69,24 +95,15 @@ namespace Task2
             string headerPattern = @"--- !u!(\d+) &(\d+)";
             var result = new Regex(headerPattern);
             Match match = result.Match(currentString);
-            while (match.Success)
+            if (match.Success)
             {
-                for (int i = 1; i <= 2; i++)
-                {
-                    Group group = match.Groups[i];
-                    Console.WriteLine(group);
-                }
-
-                if (Convert.ToInt32(match.Groups[1].Value) == 1)
+                currentAnchor = Convert.ToUInt64(match.Groups[2].Value);
+                this.result.AddAnchorUsage(currentAnchor);
+                if (Convert.ToUInt64(match.Groups[1].Value) == 1)
                 {
                     insideGameObject = true;
                 }
-
-                match = match.NextMatch();
             }
-            Console.WriteLine();
-            // add count of match.Group[2] id
-            // change currently inside a gameobject to true if match.Group[1] = 1;
         }
 
         private void ParseObjectField()
@@ -102,12 +119,12 @@ namespace Task2
             Match matchId = idRegex.Match(currentString);
             if (matchId.Success)
             {
-                Console.WriteLine(matchId.Groups[1]);
+                result.AddAnchorUsage(Convert.ToUInt64(matchId.Groups[1].Value));
             }
             Match matchGuid = guidRegex.Match(currentString);
             if (matchGuid.Success)
             {
-                Console.WriteLine(matchGuid.Groups[1]);
+                result.AddResourceUsage(Convert.ToString(matchGuid.Groups[1].Value));
             }
             if (insideGameObject)
             {
@@ -127,16 +144,42 @@ namespace Task2
                 string idPattern = @"{fileID: (\d+)}";
                 var idRegex = new Regex(idPattern);
                 Match match = idRegex.Match(currentString);
-                while (match.Success)
+                if(match.Success)
                 {
-                    for (int i = 1; i <= match.Groups.Count; i++)
-                    {
-                        Group group = match.Groups[i];
-                        Console.WriteLine(group);
-                    }
-                    match = match.NextMatch();
+                    result.AddAnchorComponent(currentAnchor, Convert.ToUInt64(match.Groups[1].Value));
                 }
             }
+        }
+
+
+
+
+
+
+
+        public void Merge(string path, object result)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int GetLocalAnchorUsages(ulong anchor)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int GetGuidUsages(string guid)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<ulong> GetComponentsFor(ulong gameObjectAnchor)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Print()
+        {
+            result.PrintCache();
         }
     }
 }
