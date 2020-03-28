@@ -8,7 +8,7 @@ namespace Task2
 {
     class FileParser
     {
-        private const int CHECKER = 20; 
+        private const int CHECKER = 20;
 
         private string currentString;
         private StreamReader file;
@@ -18,7 +18,7 @@ namespace Task2
         public void Build(string path, Action interruptChecker)
         {
             file = File.OpenText(path);
-            
+
             file.ReadLine();
             file.ReadLine();
 
@@ -51,13 +51,13 @@ namespace Task2
                 // interruption handler
                 if (nodesChecked == CHECKER)
                 {
-                    try 
-                    { 
-                        InterruptChecker(); 
+                    try
+                    {
+                        InterruptChecker();
                     }
-                    catch 
-                    { 
-                        return; 
+                    catch
+                    {
+                        return;
                     }
                 }
             }
@@ -76,7 +76,7 @@ namespace Task2
                     Group group = match.Groups[i];
                     Console.WriteLine(group);
                 }
-                
+
                 if (Convert.ToInt32(match.Groups[1].Value) == 1)
                 {
                     insideGameObject = true;
@@ -112,7 +112,7 @@ namespace Task2
             if (insideGameObject)
             {
                 string componentsPattern = @"m_Component";
-                if(Regex.IsMatch(currentString, componentsPattern))
+                if (Regex.IsMatch(currentString, componentsPattern))
                 {
                     ParseComponents();
                 }
@@ -122,7 +122,7 @@ namespace Task2
         private void ParseComponents()
         {
             //doesn't have a string
-            while(Regex.IsMatch(currentString = file.ReadLine(), "-"))
+            while (Regex.IsMatch(currentString = file.ReadLine(), "-"))
             {
                 string idPattern = @"{fileID: (\d+)}";
                 var idRegex = new Regex(idPattern);

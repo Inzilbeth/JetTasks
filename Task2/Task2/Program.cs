@@ -1,6 +1,5 @@
 ﻿using System;
 
-
 namespace Task2
 {
     class Program
@@ -11,7 +10,7 @@ namespace Task2
             string path = @"C:\Users\Талгат\Desktop\dummy.txt";
             var filep = new FileParser();
             filep.Build(path, action);
-            
+
         }
     }
 }
