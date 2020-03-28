@@ -17,50 +17,68 @@ namespace Task2
         private StreamReader file;
         private bool insideGameObject;
         private int nodesChecked;
-        //int  timestamp
+        DateTime? timestamp;
 
         public AssetCache()
         {
             result = new Cache();
             currentString = null;
-            currentStringNumber = 0;
             currentAnchor = 0;
             file = null;
             insideGameObject = false;
             nodesChecked = 0;
-            //timestamp null
+            timestamp = null;
         }
 
 
         public Cache Build(string path, Action interruptChecker)
         {
             file = File.OpenText(path);
-            //switch timestamp 
-            // case null
-            //  timestamp = file.timestamp;
-            // case file.timestamp
-            //  ContinueBuild();
-            // default
-            //  NewBuild();
-            file.ReadLine();
-            currentStringNumber++;
-            file.ReadLine();
-            currentStringNumber++;
+            DateTime fileTimestamp = File.GetLastWriteTime(path);
+            if (timestamp == null)
+            {
+                timestamp = fileTimestamp;
+            }
+            if (timestamp == fileTimestamp)
+            {
+                ContinueBuild(interruptChecker);
+            }
+            
+            NewBuild(interruptChecker);
+            
+            return result;
+        }
 
-            if ((currentString = file.ReadLine()) != null)
+        private string ReadLine()
+        {
+            currentStringNumber++;
+            return file.ReadLine();
+        }
+
+        private void NewBuild(Action interruptChecker)
+        {
+            currentStringNumber = 0;
+
+            ReadLine();
+            ReadLine();
+
+            if ((currentString = ReadLine()) != null)
             {
                 ParseObjectHeader();
             }
 
             InvokeNodeParsing(interruptChecker);
+        }
 
-            return result;
+        private void ContinueBuild(Action interruptChecker)
+        {
+
         }
 
         private void InvokeNodeParsing(Action InterruptChecker)
         {
             var headerRegex = new Regex("---");
-            while ((currentString = file.ReadLine()) != null && !headerRegex.IsMatch(currentString))
+            while ((currentString = ReadLine()) != null && !headerRegex.IsMatch(currentString))
             {
                 ParseObjectField();
                 // object body (looking for {... guid: ...} / {file id: })
@@ -69,23 +87,23 @@ namespace Task2
 
             nodesChecked++;
 
+            // interruption handler
+            if (nodesChecked == CHECKAMOUNT)
+            {
+                try
+                {
+                    InterruptChecker();
+                }
+                catch
+                {
+                    return;
+                }
+            }
+
             if (currentString != null)
             {
                 ParseObjectHeader();
                 InvokeNodeParsing(InterruptChecker);
-
-                // interruption handler
-                if (nodesChecked == CHECKAMOUNT)
-                {
-                    try
-                    {
-                        InterruptChecker();
-                    }
-                    catch
-                    {
-                        return;
-                    }
-                }
             }
         }
 
@@ -139,7 +157,7 @@ namespace Task2
         private void ParseComponents()
         {
             //doesn't have a string
-            while (Regex.IsMatch(currentString = file.ReadLine(), "-"))
+            while (Regex.IsMatch(currentString = ReadLine(), "-"))
             {
                 string idPattern = @"{fileID: (\d+)}";
                 var idRegex = new Regex(idPattern);
