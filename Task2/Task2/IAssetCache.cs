@@ -15,7 +15,7 @@ namespace Task2
         /// 'OperationCanceledException' в случае необходимости прерваться
         /// </param>
         /// <returns>Данные кэша для данного файла</returns>
-        Cache Build(string path, Action interruptChecker);
+        object Build(string path, Action interruptChecker);
 
         /// <summary>
         /// Вызывается в случае успешного построения кэша для файла и складывает результат в общий индекс.

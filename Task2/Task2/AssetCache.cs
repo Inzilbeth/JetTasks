@@ -2,13 +2,18 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Task2
 {
+    /// <summary>
+    /// Implementation of AsserCache class.
+    /// </summary>
     class AssetCache : IAssetCache
     {
         private const int CHECKAMOUNT = -1; // put to 20 on release!
 
+        Dictionary<string, Cache> index;
         private Cache result;
         private string currentString;
         private int currentStringNumber;
@@ -29,8 +34,12 @@ namespace Task2
         string headerPattern = @"--- !u!(\d+) &(\d+)";
         string componentsPattern = @"m_Component";
 
+        /// <summary>
+        /// AssetCache constructor.
+        /// </summary>
         public AssetCache()
         {
+            index = new Dictionary<string, Cache>();
             currentString = null;
             currentAnchor = 0;
             file = null;
@@ -48,7 +57,7 @@ namespace Task2
         {
             file = File.OpenText(path);
             DateTime fileTimestamp = File.GetLastWriteTime(path);
-            
+
             if (timestamp == fileTimestamp)
             {
                 try
@@ -61,27 +70,39 @@ namespace Task2
                     return null;
                 }
             }
-            timestamp = fileTimestamp;
-            try
+            else
             {
-                NewBuild(interruptChecker);
+                timestamp = fileTimestamp;
+                try
+                {
+                    NewBuild(interruptChecker);
+                }
+                catch
+                {
+                    file.Close();
+                    return null;
+                }
             }
-            catch 
-            {
-                file.Close();
-                return null; 
-            }
-
-            Console.WriteLine(currentStringNumber);
+            file.Close();
+            Merge(path, result);
             return result;
         }
 
+        /// <summary>
+        /// Reads a line from file & increases <see cref="currentStringNumber"/> by one.
+        /// </summary>
+        /// <returns></returns>
         private string ReadLine()
         {
             currentStringNumber++;
             return file.ReadLine();
         }
 
+        /// <summary>
+        /// Start parsing from the beginning.
+        /// </summary>
+        /// <param name="interruptChecker">Checks if interrpution is called, throws
+        /// 'OperationCanceledException' if so.</param>
         private void NewBuild(Action interruptChecker)
         {
             result = new Cache();
@@ -101,6 +122,11 @@ namespace Task2
             }
         }
 
+        /// <summary>
+        /// Continue parsing from the <see cref="currentStringNumber"/>'th line.
+        /// </summary>
+        /// <param name="interruptChecker">Checks if interrpution is called, throws
+        /// 'OperationCanceledException' if so.</param>
         private void ContinueBuild(Action interruptChecker)
         {
             for (int i = 1; i < currentStringNumber; i++)
@@ -118,6 +144,11 @@ namespace Task2
             
         }
 
+        /// <summary>
+        /// Parses one anchor.
+        /// </summary>
+        /// <param name="InterruptChecker">Checks if interrpution is called, throws
+        /// 'OperationCanceledException' if so.</param>
         private void ParseAnchor(Action InterruptChecker)
         {
             
@@ -134,6 +165,9 @@ namespace Task2
             }
         }
 
+        /// <summary>
+        /// Parses a line started by "--- !u!" 
+        /// </summary>
         private void ParseAnchorHeader()
         {
             insideGameObject = false;
@@ -150,6 +184,9 @@ namespace Task2
             }
         }
 
+        /// <summary>
+        /// Parses a line within an anchor.
+        /// </summary>
         private void ParseAnchorField()
         {
             Match matchId = idRegex.Match(currentString);
@@ -174,6 +211,9 @@ namespace Task2
             }
         }
 
+        /// <summary>
+        /// Parses components after "m_Components:" line within an anchor.
+        /// </summary>
         private void ParseComponents()
         {
             while (Regex.IsMatch(currentString = ReadLine(), "-"))
@@ -188,27 +228,46 @@ namespace Task2
 
         public void Merge(string path, object result)
         {
-            throw new NotImplementedException();
+            index[path] = result as Cache;
         }
 
         public int GetLocalAnchorUsages(ulong anchor)
         {
-            return result.GetAnchorUsages(anchor);
+            int totalUsages = 0;
+            foreach (KeyValuePair<string, Cache> pair in index)
+            {
+                totalUsages += pair.Value.GetAnchorUsages(anchor);
+            }
+            return totalUsages;
         }
 
         public int GetGuidUsages(string guid)
         {
-            return result.GetResourceUsgaes(guid);
+            int totalUsages = 0;
+            foreach (KeyValuePair<string, Cache> pair in index)
+            {
+                totalUsages += pair.Value.GetResourceUsgaes(guid);
+            }
+            return totalUsages;
         }
 
         public IEnumerable<ulong> GetComponentsFor(ulong gameObjectAnchor)
         {
-            return result.GetAnchorComponents(gameObjectAnchor);
+            var allComponents = new List<ulong>();
+            foreach (KeyValuePair<string, Cache> pair in index)
+            {
+                allComponents = allComponents.Union(pair.Value.GetAnchorComponents(gameObjectAnchor)).ToList();
+            }
+            return allComponents;
         }
 
-        public void WriteToFile()
+        /// <summary>
+        /// Testing method. Writes the result to a file.
+        /// </summary>
+        /// <param name="path">Path to the output file.</param>
+        public void WriteToFile(string path)
         {
-            result.PrintCache();
+            result.PrintCache(path);
         }
     }
 }

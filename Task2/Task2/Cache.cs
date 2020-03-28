@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System;
 using System.IO;
 
 namespace Task2
@@ -65,7 +64,7 @@ namespace Task2
             return 0;
         }
 
-        public IEnumerable<ulong> GetAnchorComponents(ulong id)
+        public List<ulong> GetAnchorComponents(ulong id)
         {
             if (anchors.ContainsKey(id))
             {
@@ -83,9 +82,9 @@ namespace Task2
             return 0;
         }
 
-        public void PrintCache()
+        public void PrintCache(string path)
         {
-            StreamWriter sw = new StreamWriter(@"C:\Users\Талгат\Desktop\output.txt");
+            StreamWriter sw = new StreamWriter(path);
 
             sw.WriteLine("Anchors: ");
             foreach (KeyValuePair<ulong, Anchor> pair in anchors)
