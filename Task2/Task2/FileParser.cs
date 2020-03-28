@@ -8,9 +8,12 @@ namespace Task2
 {
     class FileParser
     {
-        string currentString;
-        StreamReader file;
-        bool insideGameObject;
+        private const int CHECKER = 20; 
+
+        private string currentString;
+        private StreamReader file;
+        private bool insideGameObject;
+        private int nodesChecked;
 
         public void Build(string path, Action interruptChecker)
         {
@@ -24,6 +27,7 @@ namespace Task2
                 ParseObjectHeader();
             }
 
+            nodesChecked = 0;
             InvokeNodeParsing(interruptChecker);
         }
 
@@ -37,12 +41,25 @@ namespace Task2
                 // or if IsGameObject -> m_Components 
             }
 
+            nodesChecked++;
+
             if (currentString != null)
             {
                 ParseObjectHeader();
                 InvokeNodeParsing(InterruptChecker);
-                try { InterruptChecker(); }
-                catch { }
+
+                // interruption handler
+                if (nodesChecked == CHECKER)
+                {
+                    try 
+                    { 
+                        InterruptChecker(); 
+                    }
+                    catch 
+                    { 
+                        return; 
+                    }
+                }
             }
         }
 
