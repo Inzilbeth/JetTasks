@@ -1,14 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Task2
 {
     class AssetCache : IAssetCache
     {
-        private const int CHECKAMOUNT = 20;
+        private const int CHECKAMOUNT = -1; // put to 20 on release!
 
         private Cache result;
         private string currentString;
@@ -18,34 +17,62 @@ namespace Task2
         private bool insideGameObject;
         private int nodesChecked;
         DateTime? timestamp;
+        
+        Regex idRegex; 
+        Regex guidRegex;
+        Regex headerBeginningRegex;
+        Regex headerRegex;
+
+        string idPattern = @"{fileID: (\d+)}";
+        string guidPattern = @"guid: (\w+)";
+        string headerBeginningPattern = "---";
+        string headerPattern = @"--- !u!(\d+) &(\d+)";
+        string componentsPattern = @"m_Component";
 
         public AssetCache()
         {
-            result = new Cache();
             currentString = null;
             currentAnchor = 0;
             file = null;
             insideGameObject = false;
             nodesChecked = 0;
             timestamp = null;
+            idRegex = new Regex(idPattern);
+            guidRegex = new Regex(guidPattern);
+            headerBeginningRegex = new Regex(headerBeginningPattern);
+            headerRegex = new Regex(headerPattern);
         }
 
 
-        public Cache Build(string path, Action interruptChecker)
+        public object Build(string path, Action interruptChecker)
         {
             file = File.OpenText(path);
             DateTime fileTimestamp = File.GetLastWriteTime(path);
-            if (timestamp == null)
-            {
-                timestamp = fileTimestamp;
-            }
+            
             if (timestamp == fileTimestamp)
             {
-                ContinueBuild(interruptChecker);
+                try
+                {
+                    ContinueBuild(interruptChecker);
+                }
+                catch
+                {
+                    file.Close();
+                    return null;
+                }
             }
-            
-            NewBuild(interruptChecker);
-            
+            timestamp = fileTimestamp;
+            try
+            {
+                NewBuild(interruptChecker);
+            }
+            catch 
+            {
+                file.Close();
+                return null; 
+            }
+
+            Console.WriteLine(currentStringNumber);
             return result;
         }
 
@@ -57,6 +84,8 @@ namespace Task2
 
         private void NewBuild(Action interruptChecker)
         {
+            result = new Cache();
+
             currentStringNumber = 0;
 
             ReadLine();
@@ -64,59 +93,56 @@ namespace Task2
 
             if ((currentString = ReadLine()) != null)
             {
-                ParseObjectHeader();
+                while (currentString != null)
+                {
+                    ParseAnchorHeader();
+                    ParseAnchor(interruptChecker);
+                }
             }
-
-            InvokeNodeParsing(interruptChecker);
         }
 
         private void ContinueBuild(Action interruptChecker)
         {
-
+            for (int i = 1; i < currentStringNumber; i++)
+            {
+                file.ReadLine();
+            }
+            if ((currentString = file.ReadLine()) != null)
+            {
+                while (currentString != null)
+                {
+                    ParseAnchorHeader();
+                    ParseAnchor(interruptChecker);
+                }
+            }
+            
         }
 
-        private void InvokeNodeParsing(Action InterruptChecker)
+        private void ParseAnchor(Action InterruptChecker)
         {
-            var headerRegex = new Regex("---");
-            while ((currentString = ReadLine()) != null && !headerRegex.IsMatch(currentString))
+            
+            while ((currentString = ReadLine()) != null && !headerBeginningRegex.IsMatch(currentString))
             {
-                ParseObjectField();
-                // object body (looking for {... guid: ...} / {file id: })
-                // or if IsGameObject -> m_Components 
+                ParseAnchorField();
             }
 
             nodesChecked++;
-
-            // interruption handler
+            
             if (nodesChecked == CHECKAMOUNT)
             {
-                try
-                {
-                    InterruptChecker();
-                }
-                catch
-                {
-                    return;
-                }
-            }
-
-            if (currentString != null)
-            {
-                ParseObjectHeader();
-                InvokeNodeParsing(InterruptChecker);
+                InterruptChecker();
             }
         }
 
-        private void ParseObjectHeader()
+        private void ParseAnchorHeader()
         {
             insideGameObject = false;
-            string headerPattern = @"--- !u!(\d+) &(\d+)";
-            var result = new Regex(headerPattern);
-            Match match = result.Match(currentString);
+
+            Match match = headerRegex.Match(currentString);
             if (match.Success)
             {
                 currentAnchor = Convert.ToUInt64(match.Groups[2].Value);
-                this.result.AddAnchorUsage(currentAnchor);
+                result.AddAnchorUsage(currentAnchor);
                 if (Convert.ToUInt64(match.Groups[1].Value) == 1)
                 {
                     insideGameObject = true;
@@ -124,29 +150,23 @@ namespace Task2
             }
         }
 
-        private void ParseObjectField()
+        private void ParseAnchorField()
         {
-            // already have a string <!>
-            // found guid -> add count, quit
-            // found file id - > add count, quit
-            // check if in a gameobject rightnow, if so, check for m_Components and call ParseCompField
-            string idPattern = @"{fileID: (\d+)}";
-            string guidPattern = @"guid: (\w+)";
-            var idRegex = new Regex(idPattern);
-            var guidRegex = new Regex(guidPattern);
             Match matchId = idRegex.Match(currentString);
             if (matchId.Success)
             {
                 result.AddAnchorUsage(Convert.ToUInt64(matchId.Groups[1].Value));
             }
             Match matchGuid = guidRegex.Match(currentString);
+            
             if (matchGuid.Success)
             {
                 result.AddResourceUsage(Convert.ToString(matchGuid.Groups[1].Value));
             }
+            
             if (insideGameObject)
             {
-                string componentsPattern = @"m_Component";
+                
                 if (Regex.IsMatch(currentString, componentsPattern))
                 {
                     ParseComponents();
@@ -156,11 +176,8 @@ namespace Task2
 
         private void ParseComponents()
         {
-            //doesn't have a string
             while (Regex.IsMatch(currentString = ReadLine(), "-"))
             {
-                string idPattern = @"{fileID: (\d+)}";
-                var idRegex = new Regex(idPattern);
                 Match match = idRegex.Match(currentString);
                 if(match.Success)
                 {
@@ -169,12 +186,6 @@ namespace Task2
             }
         }
 
-
-
-
-
-
-
         public void Merge(string path, object result)
         {
             throw new NotImplementedException();
@@ -182,20 +193,20 @@ namespace Task2
 
         public int GetLocalAnchorUsages(ulong anchor)
         {
-            throw new NotImplementedException();
+            return result.GetAnchorUsages(anchor);
         }
 
         public int GetGuidUsages(string guid)
         {
-            throw new NotImplementedException();
+            return result.GetResourceUsgaes(guid);
         }
 
         public IEnumerable<ulong> GetComponentsFor(ulong gameObjectAnchor)
         {
-            throw new NotImplementedException();
+            return result.GetAnchorComponents(gameObjectAnchor);
         }
 
-        public void Print()
+        public void WriteToFile()
         {
             result.PrintCache();
         }

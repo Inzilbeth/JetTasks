@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System;
+using System.IO;
 
 namespace Task2
 {
@@ -84,23 +85,27 @@ namespace Task2
 
         public void PrintCache()
         {
-            Console.WriteLine("Anchors: ");
+            StreamWriter sw = new StreamWriter(@"C:\Users\Талгат\Desktop\output.txt");
+
+            sw.WriteLine("Anchors: ");
             foreach (KeyValuePair<ulong, Anchor> pair in anchors)
             {
-                Console.WriteLine($"ID: {pair.Key}");
-                Console.WriteLine($"Uses: {pair.Value.uses}");
-                Console.WriteLine("Components: ");
+                sw.WriteLine($"ID: {pair.Key}");
+                sw.WriteLine($"Uses: {pair.Value.uses}");
+                sw.WriteLine("Components: ");
                 foreach (ulong id in pair.Value.components)
-                    Console.WriteLine(id);
+                    sw.WriteLine(id);
             }
-            
-            Console.WriteLine("Resources: ");
+            sw.WriteLine();
+            sw.WriteLine("Resources: ");
             
             foreach (KeyValuePair<string, int> pair in resourses)
             {
-                Console.WriteLine($"Guid: {pair.Key}");
-                Console.WriteLine($"Uses: {pair.Value}");
+                sw.WriteLine($"Guid: {pair.Key}");
+                sw.WriteLine($"Uses: {pair.Value}");
             }
+
+            sw.Close();
         }
     }
 }

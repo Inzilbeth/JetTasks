@@ -8,10 +8,10 @@ namespace Task2
         {
             var cache = new Cache();
             Action action = null;
-            string path = @"C:\Users\Талгат\Desktop\dummy.txt";
+            string path = @"C:\Users\Талгат\Desktop\SampleScene.unity";
             var filep = new AssetCache();
             cache = filep.Build(path, action);
-            filep.Print();
+            filep.WriteToFile();
         }
     }
 }
