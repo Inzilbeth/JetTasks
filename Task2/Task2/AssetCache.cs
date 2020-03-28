@@ -11,8 +11,7 @@ namespace Task2
     /// </summary>
     class AssetCache : IAssetCache
     {
-        private const int CHECKAMOUNT = -1; // put to 20 on release!
-
+        private const int CHECKAMOUNT = 20;
         Dictionary<string, Cache> index;
         private Cache result;
         private string currentString;
@@ -262,7 +261,7 @@ namespace Task2
         }
 
         /// <summary>
-        /// Testing method. Writes the result to a file.
+        /// Testing method. Writes the result cache to a file.
         /// </summary>
         /// <param name="path">Path to the output file.</param>
         public void WriteToFile(string path)
