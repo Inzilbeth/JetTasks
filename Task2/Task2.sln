@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29920.165
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task2", "Task2\Task2.csproj", "{C9E97963-3E1F-4A3C-ACC0-5AD56CF9D8EE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Task2", "Task2\Task2.csproj", "{C9E97963-3E1F-4A3C-ACC0-5AD56CF9D8EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssetCacheTests", "AssetCacheTests\AssetCacheTests.csproj", "{BB4438FE-83DF-4E5E-8390-E1DE8206B6C1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C9E97963-3E1F-4A3C-ACC0-5AD56CF9D8EE} = {C9E97963-3E1F-4A3C-ACC0-5AD56CF9D8EE}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,10 @@ Global
 		{C9E97963-3E1F-4A3C-ACC0-5AD56CF9D8EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9E97963-3E1F-4A3C-ACC0-5AD56CF9D8EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9E97963-3E1F-4A3C-ACC0-5AD56CF9D8EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB4438FE-83DF-4E5E-8390-E1DE8206B6C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB4438FE-83DF-4E5E-8390-E1DE8206B6C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB4438FE-83DF-4E5E-8390-E1DE8206B6C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB4438FE-83DF-4E5E-8390-E1DE8206B6C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

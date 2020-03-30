@@ -9,7 +9,7 @@ namespace Task2
     /// <summary>
     /// Implementation of AsserCache class.
     /// </summary>
-    class AssetCache : IAssetCache
+    public class AssetCache : IAssetCache
     {
         private const int CHECKAMOUNT = 20;
         Dictionary<string, Cache> index;

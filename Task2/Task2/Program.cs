@@ -2,6 +2,9 @@
 
 namespace Task2
 {
+    /// <summary>
+    /// Some testing is done here.
+    /// </summary>
     class Program
     {
         public static void Main(string[] args)
@@ -10,8 +13,10 @@ namespace Task2
             Action action = null;
             string path = @"C:\Users\Талгат\Desktop\dummy.txt";
             var filep = new AssetCache();
+
             cache = filep.Build(path, action);
             filep.WriteToFile(@"C:\Users\Талгат\Desktop\output.txt");
+
             Console.WriteLine(filep.GetGuidUsages("0000000000000000e000000000000000"));
             Console.WriteLine(filep.GetLocalAnchorUsages(6));
             foreach (ulong id in filep.GetComponentsFor(6))
