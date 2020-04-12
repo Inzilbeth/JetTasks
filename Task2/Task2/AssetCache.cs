@@ -12,7 +12,7 @@ namespace Task2
     public class AssetCache : IAssetCache
     {
         private const int CHECKAMOUNT = 20;
-        Dictionary<string, Cache> index;
+        private Dictionary<string, Cache> index;
         private Cache result;
         private string currentString;
         private int currentStringNumber;
@@ -20,18 +20,19 @@ namespace Task2
         private StreamReader file;
         private bool insideGameObject;
         private int nodesChecked;
-        DateTime? timestamp;
-        
-        Regex idRegex; 
-        Regex guidRegex;
-        Regex headerBeginningRegex;
-        Regex headerRegex;
 
-        string idPattern = @"{fileID: (\d+)}";
-        string guidPattern = @"guid: (\w+)";
-        string headerBeginningPattern = "---";
-        string headerPattern = @"--- !u!(\d+) &(\d+)";
-        string componentsPattern = @"m_Component";
+        private Dictionary<string, DateTime?> timestamp;
+        
+        private Regex idRegex; 
+        private Regex guidRegex;
+        private Regex headerBeginningRegex;
+        private Regex headerRegex;
+
+        private const string idPattern = @"{fileID: (\d+)}";
+        private const string guidPattern = @"guid: (\w+)";
+        private const string headerBeginningPattern = "---";
+        private const string headerPattern = @"--- !u!(\d+) &(\d+)";
+        private const string componentsPattern = @"m_Component";
 
         /// <summary>
         /// AssetCache constructor.
@@ -39,12 +40,12 @@ namespace Task2
         public AssetCache()
         {
             index = new Dictionary<string, Cache>();
+            timestamp = new Dictionary<string, DateTime?>();
             currentString = null;
             currentAnchor = 0;
             file = null;
             insideGameObject = false;
             nodesChecked = 0;
-            timestamp = null;
             idRegex = new Regex(idPattern);
             guidRegex = new Regex(guidPattern);
             headerBeginningRegex = new Regex(headerBeginningPattern);
@@ -57,21 +58,9 @@ namespace Task2
             file = File.OpenText(path);
             DateTime fileTimestamp = File.GetLastWriteTime(path);
 
-            if (timestamp == fileTimestamp)
+            try
             {
-                try
-                {
-                    ContinueBuild(interruptChecker);
-                }
-                catch
-                {
-                    file.Close();
-                    return null;
-                }
-            }
-            else
-            {
-                timestamp = fileTimestamp;
+                timestamp.Add(path, fileTimestamp);
                 try
                 {
                     NewBuild(interruptChecker);
@@ -82,6 +71,37 @@ namespace Task2
                     return null;
                 }
             }
+            catch (ArgumentException)
+            {
+                if (timestamp[path] == fileTimestamp)
+                {
+                    try
+                    {
+                        ContinueBuild(interruptChecker);
+                    }
+                    catch
+                    {
+                        file.Close();
+                        return null;
+                    }
+                }
+                else
+                {
+                    timestamp[path] = fileTimestamp;
+                    try
+                    {
+                        NewBuild(interruptChecker);
+                    }
+                    catch
+                    {
+                        file.Close();
+                        return null;
+                    }
+                }
+            }
+            
+
+            /**/
             file.Close();
             Merge(path, result);
             return result;
@@ -227,7 +247,14 @@ namespace Task2
 
         public void Merge(string path, object result)
         {
-            index[path] = result as Cache;
+            try
+            {
+                index.Add(path, result as Cache);
+            }
+            catch (ArgumentException)
+            {
+                index[path] = result as Cache;
+            }
         }
 
         public int GetLocalAnchorUsages(ulong anchor)
