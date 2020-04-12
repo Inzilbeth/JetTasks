@@ -23,17 +23,17 @@ int main()
         int maxPower = 0;
         int result = 0;
 
+        if (i == 0 && j == 0)
+        {
+            cout << 0;
+            continue;
+        }
+
         while (tempI != 0 || tempJ != 0)
         {
             tempI /= 4;
             tempJ /= 4;
             maxPower++;
-        }
-
-        if (i == 0 && j == 0)
-        {
-            cout << 0;
-            continue;
         }
 
         maxPower--;
