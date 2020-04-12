@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <math.h>
 
 using namespace std;
 
@@ -8,50 +9,48 @@ int main()
     int i;
     int j;
 
-    pair<pair<int, int>, pair<int, int>> Array[100];
+    int multiplier[4][4] = { 0,1,2,3,1,0,3,2,2,3,0,1,3,2,1,0 };
 
     cin >> k;
-
-    int minColumn = 0;
-    int minLine = 0;
-    int columnMatches = 0;
-    int lineMatches = 0;
 
     for (int index = 0; index < k; index++)
     {
         cin >> i;
         cin >> j;
 
-        for (int jindex = 0; jindex <= index - lineMatches; jindex++)
+        int tempI = i;
+        int tempJ = j;
+        int maxPower = 0;
+        int result = 0;
+
+        while (tempI != 0 || tempJ != 0)
         {
-            if (Array[jindex].first.first == i)
-            {
-                lineMatches++;
-                Array[jindex].first.second++;
-                minLine = Array[jindex].first.second;
-            }
-            else
-            {
-                Array[index - lineMatches].first.first = i;
-                Array[index - lineMatches].first.second = 0;
-            }
+            tempI /= 4;
+            tempJ /= 4;
+            maxPower++;
         }
 
-        for (int jindex = 0; jindex <= index - columnMatches; jindex++)
+        if (i == 0 && j == 0)
         {
-            if (Array[jindex].second.first == j)
-            {
-                columnMatches++;
-                Array[jindex].second.second++;
-                minColumn = Array[jindex].second.second;
-            }
-            else
-            {
-                Array[index - lineMatches].second.first = j;
-                Array[index - lineMatches].second.second = 0;
-            }
+            cout << 0;
+            continue;
         }
 
-        minColumn > minLine ? cout << minColumn << "\n" : cout << minLine << "\n";
+        maxPower--;
+
+        for (int e = maxPower; e >= 0; e--)
+        {
+            int coefficient = pow(4, e);
+
+            int localI = i / coefficient;
+            i %= coefficient;
+
+            int localJ = j / coefficient;
+            j %= coefficient;
+
+            result += (coefficient * multiplier[localI][localJ]);
+        }
+
+        cout << result;
     }
 }
