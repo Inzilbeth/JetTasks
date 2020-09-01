@@ -8,18 +8,20 @@ namespace AssetCacheTests
 {
     public class AssetCacheTests
     {
-        string path = "test.txt";
+        static readonly string path = "test.txt";
         int setOfTwentyCount;
-        AssetCache assetache;
+        AssetCache assetcache;
 
-        [SetUp]
-        public void Setup()
+        [SetUpFixture]
+        public class TestsSetupClass
         {
-            setOfTwentyCount = 0;
 
-            using (StreamWriter sr = new StreamWriter(path))
+            [OneTimeSetUp]
+            public void GlobalSetup()
             {
-                sr.Write(@"%YAML 1.1
+                using (StreamWriter sr = new StreamWriter(path))
+                {
+                    sr.Write(@"%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!29 &1
 OcclusionCullingSettings:
@@ -4065,10 +4067,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ");
-                sr.Close();
+                    sr.Close();
+                }
             }
 
-            assetache = new AssetCache();
+            [OneTimeTearDown]
+            public void GlobalTeardown()
+            {
+                File.Delete(path);
+            }
+        }
+
+        [SetUp]
+        public void Setup()
+        {
+            setOfTwentyCount = 0;
+            assetcache = new AssetCache();
         }
 
         public void TestingChecker()
@@ -4087,28 +4101,28 @@ MonoBehaviour:
         [Test]
         public void BuildWithoutInterruptionTest()
         {
-            Assert.IsFalse(assetache.Build(path, EmptyTestingChecker) == null);
+            Assert.IsFalse(assetcache.Build(path, EmptyTestingChecker) == null);
         }
 
         [Test]
         public void BuildWithInterruptionTest()
         {
-            assetache.Build(path, TestingChecker);
-            Assert.IsFalse(assetache.Build(path, TestingChecker) == null);
+            assetcache.Build(path, TestingChecker);
+            Assert.IsFalse(assetcache.Build(path, TestingChecker) == null);
         }
 
         [Test]
         public void InterruptedBuildAndNotInterruptedBuildAreEqualTest()
         {
             AssetCache extraAssetcache = new AssetCache();
-            assetache.Build(path, TestingChecker);
-            assetache.Build(path, TestingChecker);
+            assetcache.Build(path, TestingChecker);
+            assetcache.Build(path, TestingChecker);
             extraAssetcache.Build(path, EmptyTestingChecker);
 
             string path1 = "result1.txt";
             string path2 = "result2.txt";
 
-            assetache.WriteToFile(path1);
+            assetcache.WriteToFile(path1);
             extraAssetcache.WriteToFile(path2);
 
             string res1;
@@ -4125,29 +4139,32 @@ MonoBehaviour:
                 sr.Close();
             }
 
+            File.Delete(path1);
+            File.Delete(path2);
+
             Assert.AreEqual(res1, res2);
         }
 
         [Test]
         public void GetLocalAnchorUsagesTest()
         {
-            assetache.Build(path, EmptyTestingChecker);
+            assetcache.Build(path, EmptyTestingChecker);
 
-            Assert.AreEqual(assetache.GetLocalAnchorUsages(1112492), 4);
+            Assert.AreEqual(assetcache.GetLocalAnchorUsages(1112492), 4);
         }
 
         [Test]
         public void GetGuidUsagesTest()
         {
-            assetache.Build(path, EmptyTestingChecker);
+            assetcache.Build(path, EmptyTestingChecker);
 
-            Assert.AreEqual(assetache.GetGuidUsages("2533da7f71e31194491fadf09acb9ff8"), 18);
+            Assert.AreEqual(assetcache.GetGuidUsages("2533da7f71e31194491fadf09acb9ff8"), 18);
         }
 
         [Test]
         public void GetComponentsTest()
         {
-            assetache.Build(path, EmptyTestingChecker);
+            assetcache.Build(path, EmptyTestingChecker);
             var components = new List<ulong>();
             
             components.Add(242);
@@ -4155,7 +4172,7 @@ MonoBehaviour:
             components.Add(244);
             components.Add(243);
 
-            Assert.AreEqual(assetache.GetComponentsFor(241), components);
+            Assert.AreEqual(assetcache.GetComponentsFor(241), components);
         }
 
 
